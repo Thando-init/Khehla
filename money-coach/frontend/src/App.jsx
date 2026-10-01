@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { apiRequest } from './api/client'
 import './styles.css'
 
@@ -12,6 +12,22 @@ const TABS = [
 
 /** Format ZAR consistently throughout the product. */
 const zar = (value) => `R ${Number(value).toLocaleString('en-ZA', { maximumFractionDigits: 0 })}`
+
+/** Chat history stays on this device; only the latest turns are sent for follow-up context. */
+const CHAT_STORAGE_KEY = 'khehla-chat'
+const CHAT_MESSAGES_KEPT = 50
+const HISTORY_TURNS_SENT = 8
+const HISTORY_CHARS_SENT = 1000
+
+/** Read the saved chat safely: storage can be blocked, cleared, or hold stale data. */
+function loadChat() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]')
+    return Array.isArray(saved) ? saved : []
+  } catch {
+    return []
+  }
+}
 
 /** Render one compact transaction row without icon-heavy decoration. */
 function TransactionRow({ label, detail, amount, positive = false }) {
@@ -30,7 +46,9 @@ export default function App() {
   const [impact, setImpact] = useState(null)
   const [coachOpen, setCoachOpen] = useState(false)
   const [question, setQuestion] = useState('')
-  const [coachReply, setCoachReply] = useState('')
+  const [messages, setMessages] = useState(loadChat)
+  const [sending, setSending] = useState(false)
+  const chatLogRef = useRef(null)
   const [loading, setLoading] = useState(true)
 
   /** Load calculated dashboard data once; the UI never calculates balances. */
@@ -41,15 +59,32 @@ export default function App() {
       .finally(() => setLoading(false))
   }, [])
 
-  /** Ask Flask Coach and show the validated response in a small assistant panel. */
+  /** Save the chat on this device and keep the newest message in view. */
+  useEffect(() => {
+    try { localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages.slice(-CHAT_MESSAGES_KEPT))) } catch { /* storage unavailable */ }
+    if (chatLogRef.current) chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight
+  }, [messages, sending, coachOpen])
+
+  /** Ask Flask Coach with recent turns so follow-up questions keep their meaning. */
   async function askCoach(event) {
     event.preventDefault()
-    if (!question.trim()) return
-    try {
-      const response = await apiRequest('/api/coach/message', { method: 'POST', body: JSON.stringify({ user_id: 'demo-grace', message: question.trim() }) })
-      setCoachReply(response.message)
-    } catch (error) { setCoachReply(error.message) }
+    const text = question.trim()
+    if (!text || sending) return
+    const history = messages
+      .filter((message) => message.role !== 'error')
+      .slice(-HISTORY_TURNS_SENT)
+      .map(({ role, content }) => ({ role, content: content.slice(0, HISTORY_CHARS_SENT) }))
+    setMessages((current) => [...current, { role: 'user', content: text }])
     setQuestion('')
+    setSending(true)
+    try {
+      const response = await apiRequest('/api/coach/message', { method: 'POST', body: JSON.stringify({ user_id: 'demo-grace', message: text, history }) })
+      setMessages((current) => [...current, { role: 'assistant', content: response.message, actions: response.actions || [], disclaimer: response.disclaimer }])
+    } catch (error) {
+      setMessages((current) => [...current, { role: 'error', content: error.message }])
+    } finally {
+      setSending(false)
+    }
   }
 
   const summary = dashboard?.financial_summary
@@ -82,6 +117,21 @@ export default function App() {
     </main>
 
     <button className="floating-coach" type="button" onClick={() => setCoachOpen((value) => !value)}><span className="coach-dot">M</span><span>Ask Khehla</span><b>↗</b></button>
-    {coachOpen && <aside className="coach-popover"><button className="close-button" onClick={() => setCoachOpen(false)}>×</button><span className="eyebrow">Khehla</span><h2>What would you like to understand?</h2><p className="muted">Ask about your budget, goals, spending, or what-if scenarios.</p><form onSubmit={askCoach}><input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Try: What if I save R100 a week?" autoFocus /><button className="primary-button" type="submit">Ask</button></form>{coachReply && <div className="coach-response">{coachReply}</div>}</aside>}
+    {coachOpen && <aside className="coach-popover">
+      <button className="close-button" onClick={() => setCoachOpen(false)}>×</button>
+      <span className="eyebrow">Khehla</span>
+      <h2>What would you like to understand?</h2>
+      {messages.length === 0 && <p className="muted">Ask about your budget, goals, spending, or what-if scenarios.</p>}
+      {messages.length > 0 && <div className="coach-log" ref={chatLogRef} aria-live="polite">
+        {messages.map((message, index) => <div key={index} className={`coach-message coach-${message.role}`}>
+          <p>{message.content}</p>
+          {message.actions?.length > 0 && <ul className="coach-actions">{message.actions.map((action) => <li key={action}>{action}</li>)}</ul>}
+          {message.disclaimer && <small className="coach-disclaimer">{message.disclaimer}</small>}
+        </div>)}
+        {sending && <div className="coach-message coach-assistant coach-typing">Khehla is thinking…</div>}
+      </div>}
+      <form onSubmit={askCoach}><input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Try: What if I save R100 a week?" disabled={sending} autoFocus /><button className="primary-button" type="submit" disabled={sending}>Ask</button></form>
+      {messages.length > 0 && <button className="text-button coach-clear" type="button" onClick={() => setMessages([])} disabled={sending}>Clear chat</button>}
+    </aside>}
   </div>
 }

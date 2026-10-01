@@ -1,20 +1,35 @@
 """HTTP endpoints for the Khehla vertical slice."""
 
+from functools import lru_cache
+from typing import Literal
+
 from flask import Blueprint, jsonify, request
 from pydantic import BaseModel, Field, ValidationError
 
-from ai.provider import DemoAIProvider
+from ai.provider import get_provider
 from data.demo import DEMO_USER, ECONOMIC_CONTEXT, GOALS, TRANSACTIONS
 from services.financial_calculator import goal_progress, impact_estimate, monthly_summary, spending_by_category, what_if
 
 api = Blueprint("api", __name__)
-coach_provider = DemoAIProvider()
+
+
+@lru_cache(maxsize=1)
+def _coach_provider():
+    """Create the coach provider on first use, after app.py has loaded .env."""
+    return get_provider()
+
+
+class ChatTurn(BaseModel):
+    """One earlier chat message sent back by the client for follow-up context."""
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=1000)
 
 
 class CoachRequest(BaseModel):
     """Validate the bounded text accepted by the Coach endpoint."""
     user_id: str = Field(min_length=1, max_length=80)
     message: str = Field(min_length=1, max_length=2000)
+    history: list[ChatTurn] = Field(default_factory=list, max_length=8)
 
 
 class WhatIfRequest(BaseModel):
@@ -60,7 +75,8 @@ def coach_message():
     if payload.user_id != DEMO_USER["id"]:
         return jsonify({"error": "User not found."}), 404
     context = {"user": DEMO_USER, "summary": monthly_summary(DEMO_USER["monthly_income"], TRANSACTIONS), "spending": spending_by_category(TRANSACTIONS), "goal": _goal()}
-    return jsonify(coach_provider.coach(context, payload.message))
+    history = [turn.model_dump() for turn in payload.history]
+    return jsonify(_coach_provider().coach(context, payload.message, history))
 
 
 @api.post("/what-if")
