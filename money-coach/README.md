@@ -1,8 +1,8 @@
-# Money Coach
+# Khehla
 
-Money Coach is a mobile-first, chat-first financial coaching prototype. It helps Grace understand her spending, savings goals, remittances, and the personal impact of economic changes.
+Khehla is a mobile-first, chat-first financial coaching prototype. It helps Grace understand her spending, savings goals, remittances, and the personal impact of economic changes.
 
-> **Money Coach translates financial activity and economic changes into realistic personal decisions.**
+> **Khehla translates financial activity and economic changes into realistic personal decisions.**
 
 ## Architecture
 
@@ -124,4 +124,4 @@ VITE_API_URL=https://your-backend.example.com
 
 ## Product disclaimer
 
-Money Coach provides educational guidance based on available information. It is not a bank, lender, or licensed financial adviser.
+Khehla provides educational guidance based on available information. It is not a bank, lender, or licensed financial adviser.

@@ -1,4 +1,4 @@
-"""AI provider boundary for Money Coach.
+"""AI provider boundary for Khehla.
 
 The demo provider keeps local development deterministic. A real provider can
 implement the same interface without changing Flask routes or the frontend.

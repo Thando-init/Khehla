@@ -1,4 +1,4 @@
-"""Black-box acceptance tests for the Money Coach HTTP contract."""
+"""Black-box acceptance tests for the Khehla HTTP contract."""
 
 import sys
 from pathlib import Path

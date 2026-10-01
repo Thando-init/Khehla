@@ -1,4 +1,4 @@
-"""Money Coach Flask application.
+"""Khehla Flask application.
 
 The app factory keeps configuration and route registration explicit so the
 same application can be used by local development, pytest, and Gunicorn.
@@ -17,7 +17,7 @@ load_dotenv()
 
 
 def create_app(test_config=None):
-    """Create and configure a Money Coach application instance."""
+    """Create and configure a Khehla application instance."""
     app = Flask(__name__)
     app.config.update(
         MAX_CONTENT_LENGTH=16 * 1024,

@@ -1,4 +1,4 @@
-"""Gunicorn entrypoint for Money Coach."""
+"""Gunicorn entrypoint for Khehla."""
 
 from app import app
 

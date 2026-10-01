@@ -1,6 +1,6 @@
-# Money Coach Backend
+# Khehla Backend
 
-Flask API for the Money Coach prototype.
+Flask API for the Khehla prototype.
 
 ## Boundaries
 

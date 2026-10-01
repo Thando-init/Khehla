@@ -1,4 +1,4 @@
-# Money Coach Frontend
+# Khehla Frontend
 
 Responsive React/Vite dashboard with a floating Coach entry point. The visual
 direction is warm, practical, and product-designed rather than chat-only: an

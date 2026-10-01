@@ -1,4 +1,4 @@
-"""Unit tests for Money Coach arithmetic; no network or Flask required."""
+"""Unit tests for Khehla arithmetic; no network or Flask required."""
 
 from datetime import date
 

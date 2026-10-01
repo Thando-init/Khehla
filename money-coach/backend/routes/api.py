@@ -1,4 +1,4 @@
-"""HTTP endpoints for the Money Coach vertical slice."""
+"""HTTP endpoints for the Khehla vertical slice."""
 
 from flask import Blueprint, jsonify, request
 from pydantic import BaseModel, Field, ValidationError
@@ -32,7 +32,7 @@ def _goal():
 @api.get("/health")
 def health():
     """Provide a minimal liveness response for deployment checks."""
-    return jsonify({"status": "ok", "service": "money-coach"})
+    return jsonify({"status": "ok", "service": "khehla"})
 
 
 @api.get("/dashboard")

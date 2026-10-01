@@ -51,7 +51,7 @@
 ## Acceptance flow
 
 1. Open the app on a phone viewport.
-2. See a concise Money Coach welcome.
+2. See a concise Khehla welcome.
 3. See Grace's remaining money and school-fees goal in the chat.
 4. See a Money Impact card with an estimate and source field.
 5. Tap a suggested question.
@@ -77,4 +77,4 @@ Show a deterministic R400 four-week estimate.
 
 End with:
 
-> Money Coach does not just show Grace where her money went. It helps her understand what is changing, what it means personally, and what she can realistically do next.
+> Khehla does not just show Grace where her money went. It helps her understand what is changing, what it means personally, and what she can realistically do next.

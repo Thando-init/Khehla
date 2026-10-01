@@ -1,4 +1,4 @@
-"""Pure financial calculations for Money Coach.
+"""Pure financial calculations for Khehla.
 
 This module intentionally has no Flask or AI dependencies. Keeping arithmetic
 here makes the backend the source of truth and makes the rules easy to test.

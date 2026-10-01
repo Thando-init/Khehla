@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { apiRequest } from './api/client'
 import './styles.css'
 
-/** Product sections mirror the reference dashboard while staying faithful to Money Coach. */
+/** Product sections mirror the reference dashboard while staying faithful to Khehla. */
 const TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'budget', label: 'Budget' },
@@ -58,11 +58,11 @@ export default function App() {
 
   return <div className="app-shell">
     <main className="app-container">
-      <header className="topbar"><div className="brand"><span className="brand-mark">MC</span><span>Money Coach</span></div><div className="profile"><span>Hi, Grace</span><span className="avatar">G</span></div></header>
+      <header className="topbar"><div className="brand"><span className="brand-mark">MC</span><span>Khehla</span></div><div className="profile"><span>Hi, Grace</span><span className="avatar">G</span></div></header>
 
       <section className="hero"><div><span className="hero-label">Your money, made simpler</span><h1>Good afternoon, Grace.</h1><p>You have covered the essentials. Here is what your money is doing and where your next small step could help.</p></div><div className="hero-summary"><span>Money left this month</span><strong>{loading ? '—' : zar(summary?.remaining)}</strong><b>Based on your latest activity</b></div></section>
 
-      <nav className="tabs" aria-label="Money Coach sections">{TABS.map((tab) => <button key={tab.id} type="button" className={activeTab === tab.id ? 'active' : ''} onClick={() => setActiveTab(tab.id)}>{tab.label}</button>)}</nav>
+      <nav className="tabs" aria-label="Khehla sections">{TABS.map((tab) => <button key={tab.id} type="button" className={activeTab === tab.id ? 'active' : ''} onClick={() => setActiveTab(tab.id)}>{tab.label}</button>)}</nav>
 
       {loading && <div className="loading-card">Loading your money snapshot…</div>}
 
@@ -78,10 +78,10 @@ export default function App() {
 
       {!loading && activeTab === 'goals' && <section className="dashboard-grid"><article className="card span-8"><CardHeader eyebrow="Your progress" title="Savings goals" action="+ New goal" /><div className="goal-block"><div className="split"><div><strong>Sister's school fees</strong><span>Target {zar(goal?.target_amount)}</span></div><b>{zar(goal?.saved_amount)}</b></div><div className="progress"><span style={{ width: `${goal?.progress_percent}%` }} /></div><div className="split muted"><span>{goal?.progress_percent}% complete</span><span>{zar(goal?.remaining)} to go</span></div></div><div className="goal-block"><div className="split"><div><strong>Emergency buffer</strong><span>Future goal</span></div><b>R0</b></div><div className="progress"><span style={{ width: '5%' }} /></div><div className="split muted"><span>Just getting started</span><span>Set a target when ready</span></div></div></article><article className="card span-4"><span className="eyebrow">This month's saving</span><div className="metric">R 1,050</div><p className="muted">Small, consistent steps count. What-if scenarios can help you choose a pace.</p><button className="primary-button" type="button" onClick={() => setCoachOpen(true)}>Ask Coach</button></article></section>}
 
-      {!loading && activeTab === 'outlook' && <section className="dashboard-grid"><article className="card span-8"><CardHeader eyebrow="Personal projection" title="What could change?" action="Refresh" /><div className="impact-large"><div className="impact-title">{impact?.title}</div><p>{impact?.description}</p><strong>{zar(impact?.estimated_monthly_impact)} / month</strong><span className="estimate-label">Estimate based on {zar(impact?.monthly_spend)} transport spending</span></div><div className="option-list"><div><strong>Set aside R30 each week</strong><span>Protect your school-fees goal</span></div><div><strong>Review flexible spending</strong><span>Find room without touching rent or family support</span></div></div></article><article className="card span-4"><CardHeader eyebrow="Coach outlook" title="The simple view" /><p className="muted body-copy">Economic changes do not affect everyone in the same way. Money Coach connects the change to your own spending, then gives you choices.</p><button className="primary-button" type="button" onClick={() => setCoachOpen(true)}>Talk it through</button></article></section>}
+      {!loading && activeTab === 'outlook' && <section className="dashboard-grid"><article className="card span-8"><CardHeader eyebrow="Personal projection" title="What could change?" action="Refresh" /><div className="impact-large"><div className="impact-title">{impact?.title}</div><p>{impact?.description}</p><strong>{zar(impact?.estimated_monthly_impact)} / month</strong><span className="estimate-label">Estimate based on {zar(impact?.monthly_spend)} transport spending</span></div><div className="option-list"><div><strong>Set aside R30 each week</strong><span>Protect your school-fees goal</span></div><div><strong>Review flexible spending</strong><span>Find room without touching rent or family support</span></div></div></article><article className="card span-4"><CardHeader eyebrow="Coach outlook" title="The simple view" /><p className="muted body-copy">Economic changes do not affect everyone in the same way. Khehla connects the change to your own spending, then gives you choices.</p><button className="primary-button" type="button" onClick={() => setCoachOpen(true)}>Talk it through</button></article></section>}
     </main>
 
-    <button className="floating-coach" type="button" onClick={() => setCoachOpen((value) => !value)}><span className="coach-dot">M</span><span>Ask Money Coach</span><b>↗</b></button>
-    {coachOpen && <aside className="coach-popover"><button className="close-button" onClick={() => setCoachOpen(false)}>×</button><span className="eyebrow">Money Coach</span><h2>What would you like to understand?</h2><p className="muted">Ask about your budget, goals, spending, or what-if scenarios.</p><form onSubmit={askCoach}><input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Try: What if I save R100 a week?" autoFocus /><button className="primary-button" type="submit">Ask</button></form>{coachReply && <div className="coach-response">{coachReply}</div>}</aside>}
+    <button className="floating-coach" type="button" onClick={() => setCoachOpen((value) => !value)}><span className="coach-dot">M</span><span>Ask Khehla</span><b>↗</b></button>
+    {coachOpen && <aside className="coach-popover"><button className="close-button" onClick={() => setCoachOpen(false)}>×</button><span className="eyebrow">Khehla</span><h2>What would you like to understand?</h2><p className="muted">Ask about your budget, goals, spending, or what-if scenarios.</p><form onSubmit={askCoach}><input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Try: What if I save R100 a week?" autoFocus /><button className="primary-button" type="submit">Ask</button></form>{coachReply && <div className="coach-response">{coachReply}</div>}</aside>}
   </div>
 }
