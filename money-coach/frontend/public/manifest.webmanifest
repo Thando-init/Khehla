@@ -1,0 +1,11 @@
+{
+  "name": "Money Coach",
+  "short_name": "Money Coach",
+  "description": "Understand your money and choose your next practical step.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffaf7",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": []
+}
