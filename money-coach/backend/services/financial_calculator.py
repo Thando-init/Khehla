@@ -7,6 +7,7 @@ here makes the backend the source of truth and makes the rules easy to test.
 from collections import defaultdict
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_CEILING, ROUND_HALF_UP
 
 
 def money(value):
@@ -52,3 +53,21 @@ def what_if(current_saved, target, weekly_saving, weeks):
     estimated_saved = max(float(weekly_saving), 0) * max(int(weeks), 0)
     new_saved = float(current_saved) + estimated_saved
     return {"estimated_saved": money(estimated_saved), "new_saved_amount": money(new_saved), "new_amount_remaining": money(max(float(target) - new_saved, 0)), "is_estimate": True}
+
+
+def inflation_goal_projection(goal_today, current_savings, annual_inflation_percent, months):
+    cents = Decimal("0.01")
+    factor = (Decimal(1) + Decimal(str(annual_inflation_percent)) / 100) ** (Decimal(months) / 12)
+    future_goal = (Decimal(str(goal_today)) * factor).quantize(cents, rounding=ROUND_HALF_UP)
+    remaining = max(future_goal - Decimal(str(current_savings)), Decimal(0))
+    monthly = (remaining / months).quantize(cents, rounding=ROUND_CEILING)
+    return {
+        "goal_today": float(goal_today),
+        "current_savings": float(current_savings),
+        "months": months,
+        "inflation_adjusted_goal": float(future_goal),
+        "remaining": float(remaining),
+        "monthly_saving_needed": float(monthly),
+        "suggested_monthly_rand": int(monthly.to_integral_value(rounding=ROUND_CEILING)),
+        "is_estimate": True,
+    }

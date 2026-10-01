@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field, ValidationError
 from ai.provider import get_provider
 from data.demo import DEMO_USER, ECONOMIC_CONTEXT, GOALS, TRANSACTIONS
 from services.financial_calculator import goal_progress, impact_estimate, monthly_summary, spending_by_category, what_if
+from services.financial_calculator import goal_progress, impact_estimate, inflation_goal_projection, monthly_summary, spending_by_category, what_if
+from services.inflation import InflationUnavailable, get_inflation
 
 api = Blueprint("api", __name__)
 
@@ -37,6 +39,11 @@ class WhatIfRequest(BaseModel):
     user_id: str = Field(min_length=1, max_length=80)
     weekly_saving: float = Field(ge=0, le=1_000_000)
     weeks: int = Field(ge=0, le=520)
+
+class GoalProjectionRequest(BaseModel):
+    goal_today: float = Field(gt=0, le=1_000_000_000, allow_inf_nan=False)
+    current_savings: float = Field(ge=0, le=1_000_000_000, allow_inf_nan=False)
+    months: int = Field(ge=1, le=120, strict=True)
 
 
 def _goal():
@@ -90,3 +97,36 @@ def what_if_route():
         return jsonify({"error": "User not found."}), 404
     goal = GOALS[0]
     return jsonify(what_if(goal["saved_amount"], goal["target_amount"], payload.weekly_saving, payload.weeks))
+
+@api.get("/economy/inflation")
+def economy_inflation():
+    try:
+        return jsonify(get_inflation())
+    except InflationUnavailable:
+        return jsonify({"error": "Inflation data unavailable. Please try again."}), 503
+
+
+@api.post("/predictions/goal")
+def predict_goal():
+    try:
+        payload = GoalProjectionRequest.model_validate(request.get_json(silent=True) or {})
+    except ValidationError as error:
+        return jsonify({"error": "Invalid goal request.", "details": error.errors(include_url=False)}), 400
+    try:
+        economy = get_inflation()
+    except InflationUnavailable:
+        return jsonify({"error": "Inflation data unavailable. Please try again."}), 503
+    result = inflation_goal_projection(
+        payload.goal_today, payload.current_savings,
+        economy["annual_inflation_percent"], payload.months,
+    )
+    return jsonify({
+        **result,
+        "economy": economy,
+        "projection_type": "constant_inflation_scenario",
+        "assumptions": [
+            "Historical annual inflation continues unchanged",
+            "No interest, fees, withdrawals or price quote",
+            "Equal monthly contributions",
+        ],
+    })
