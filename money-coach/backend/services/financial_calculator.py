@@ -6,7 +6,6 @@ here makes the backend the source of truth and makes the rules easy to test.
 
 from collections import defaultdict
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
 from decimal import Decimal, ROUND_CEILING, ROUND_HALF_UP
 
 
@@ -37,10 +36,10 @@ def goal_progress(goal, today=None):
     target = float(goal["target_amount"])
     saved = float(goal["saved_amount"])
     remaining = max(target - saved, 0)
-    deadline = date.fromisoformat(goal["deadline"])
-    days = max((deadline - today).days, 0)
-    required_per_day = 0 if remaining == 0 or days == 0 else remaining / days
-    return {"name": goal["name"], "target_amount": money(target), "saved_amount": money(saved), "remaining": money(remaining), "progress_percent": money(min(saved / target * 100 if target else 0, 100)), "deadline": goal["deadline"], "days_remaining": days, "required_per_day": money(required_per_day), "required_per_week": money(required_per_day * 7), "on_track": remaining == 0 or days > 0}
+    deadline_text = goal.get("deadline")
+    days = max((date.fromisoformat(deadline_text) - today).days, 0) if deadline_text else None
+    required_per_day = (0 if remaining == 0 or days == 0 else remaining / days) if days is not None else (0 if remaining == 0 else None)
+    return {"name": goal["name"], "target_amount": money(target), "saved_amount": money(saved), "remaining": money(remaining), "progress_percent": money(min(saved / target * 100 if target else 0, 100)), "deadline": deadline_text, "days_remaining": days, "required_per_day": money(required_per_day) if required_per_day is not None else None, "required_per_week": money(required_per_day * 7) if required_per_day is not None else None, "on_track": remaining == 0 or (days is not None and days > 0) if deadline_text else None}
 
 
 def impact_estimate(monthly_spend, change_percent):
@@ -56,6 +55,13 @@ def what_if(current_saved, target, weekly_saving, weeks):
 
 
 def inflation_goal_projection(goal_today, current_savings, annual_inflation_percent, months):
+    """Estimate a future goal price using constant annual CPI and equal saving.
+
+    This is a planning scenario, not a forecast: it compounds the supplied
+    annual rate over the requested month horizon, deducts current savings, and
+    rounds the monthly contribution upward so it is sufficient to cover the
+    remaining amount. The caller must disclose the assumptions to the user.
+    """
     cents = Decimal("0.01")
     factor = (Decimal(1) + Decimal(str(annual_inflation_percent)) / 100) ** (Decimal(months) / 12)
     future_goal = (Decimal(str(goal_today)) * factor).quantize(cents, rounding=ROUND_HALF_UP)

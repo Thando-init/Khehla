@@ -1,23 +1,36 @@
 """Khehla Flask application.
 
-The app factory keeps configuration and route registration explicit so the
-same application can be used by local development, pytest, and Gunicorn.
+The app factory makes API configuration and SQLite repository ownership
+explicit so local development, pytest, and Gunicorn share the same setup.
 """
 
 import logging
 import os
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from flask_cors import CORS
 
 from routes.api import api
+from services.repository import SQLiteRepository
 
 load_dotenv()
 
 
+def _database_path(app):
+    """Resolve an environment/test database path without writing into source files."""
+    configured_path = app.config.get("DATABASE_PATH") or os.getenv("KHEHLA_DATABASE_PATH", "").strip()
+    if configured_path:
+        if configured_path == ":memory:" or os.path.isabs(configured_path):
+            return configured_path
+        return os.path.join(app.root_path, configured_path)
+    if app.config.get("TESTING"):
+        return ":memory:"
+    return os.path.join(app.instance_path, "khehla.sqlite3")
+
+
 def create_app(test_config=None):
-    """Create and configure a Khehla application instance."""
+    """Create the Flask application and attach its durable demo repository."""
     app = Flask(__name__)
     app.config.update(
         MAX_CONTENT_LENGTH=16 * 1024,
@@ -25,6 +38,8 @@ def create_app(test_config=None):
     )
     if test_config:
         app.config.update(test_config)
+
+    app.extensions["khehla_repository"] = SQLiteRepository(_database_path(app))
 
     origins = ["http://localhost:5173", "http://localhost:3000"]
     configured_origin = os.getenv("FRONTEND_ORIGIN", "").strip().rstrip("/")
@@ -51,6 +66,7 @@ def create_app(test_config=None):
     return app
 
 
+# Gunicorn imports this application object; the SQLite database is created on first boot.
 app = create_app()
 
 if __name__ == "__main__":
