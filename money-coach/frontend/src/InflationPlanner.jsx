@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { apiRequest } from './api/client'
 
-const zar = (v) => `R ${Number(v).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+const zar = (value) => `R${Number(value).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const STATUS_LABEL = {
   live: 'Live from World Bank',
-  cached: 'Cached data (under 24 hours old)',
-  stale_cache: 'Cached data (could not refresh)'
+  cached: 'Cached data · under 24 hours old',
+  stale_cache: 'Cached data · refresh unavailable',
 }
 
 export default function InflationPlanner() {
@@ -29,46 +29,46 @@ export default function InflationPlanner() {
     try {
       setResult(await apiRequest('/api/predictions/goal', {
         method: 'POST',
-        body: JSON.stringify({ goal_today: goalToday, current_savings: currentSavings, months: monthCount })
+        body: JSON.stringify({ goal_today: goalToday, current_savings: currentSavings, months: monthCount }),
       }))
-    } catch (err) {
+    } catch (requestError) {
       setResult(null)
-      setError(err.message)
+      setError(requestError.message || 'Inflation data is unavailable. Please try again.')
     } finally {
       setBusy(false)
     }
   }
 
   const economy = result?.economy
-  return <article className="card span-12">
-    <span className="eyebrow">Inflation planner</span>
-    <h2 style={{ margin: '0 0 6px' }}>What could this goal cost later?</h2>
-    <p className="muted">Enter today's price. Khehla adjusts it for South African inflation and shows a monthly amount to aim for.</p>
+  return <article className="surface-card inflation-card">
+    <p className="eyebrow">INFLATION PLANNER</p>
+    <h2>What could your goal cost later?</h2>
+    <p>Use South African inflation data to make a simple savings scenario.</p>
     <form onSubmit={submit} className="planner-form">
-      <label>Cost today (R)<input inputMode="decimal" value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="10000" /></label>
-      <label>Already saved (R)<input inputMode="decimal" value={saved} onChange={(e) => setSaved(e.target.value)} placeholder="4000" /></label>
-      <label>Months to go<input inputMode="numeric" value={months} onChange={(e) => setMonths(e.target.value)} /></label>
+      <label>Cost today (R)<input type="number" min="0.01" step="0.01" inputMode="decimal" value={goal} onChange={(event) => setGoal(event.target.value)} placeholder="10000" /></label>
+      <label>Already saved (R)<input type="number" min="0" step="0.01" inputMode="decimal" value={saved} onChange={(event) => setSaved(event.target.value)} placeholder="4000" /></label>
+      <label>Months to go<input type="number" min="1" max="120" step="1" inputMode="numeric" value={months} onChange={(event) => setMonths(event.target.value)} /></label>
       <button className="primary-button" type="submit" disabled={busy}>{busy ? 'Calculating…' : 'Calculate'}</button>
     </form>
     {error && <div className="planner-error" role="alert">{error}</div>}
-    {result && <div className="planner-results">
+    {result && economy && <div className="planner-results" aria-live="polite">
       <div>
-        <span className="eyebrow">Latest available annual inflation</span>
-        <div className="metric">{economy.annual_inflation_percent.toFixed(1)}%</div>
+        <p className="eyebrow">LATEST ANNUAL INFLATION</p>
+        <div className="metric">{Number(economy.annual_inflation_percent).toFixed(1)}%</div>
         <span className="muted">{economy.observation_year} · {economy.source}</span>
         <span className="badge">{STATUS_LABEL[economy.data_status]}</span>
       </div>
       <div>
-        <span className="eyebrow">Goal in {result.months} months</span>
+        <p className="eyebrow">GOAL IN {result.months} MONTHS</p>
         <div className="metric">{zar(result.inflation_adjusted_goal)}</div>
         <span className="muted">{zar(result.remaining)} still to save</span>
       </div>
       <div>
-        <span className="eyebrow">Aim to save</span>
-        <div className="metric">R {result.suggested_monthly_rand.toLocaleString('en-ZA')} / month</div>
-        <span className="muted">Estimate, assuming inflation stays the same</span>
+        <p className="eyebrow">AIM TO SAVE</p>
+        <div className="metric">{zar(result.suggested_monthly_rand)} / month</div>
+        <span className="muted">Assuming inflation stays the same</span>
       </div>
     </div>}
-    {result && <p className="muted planner-note">This is a planning estimate, not a forecast. It ignores interest, fees and withdrawals.</p>}
+    {result && <p className="planner-note">Planning estimate, not a forecast. It ignores interest, fees, and withdrawals.</p>}
   </article>
 }
